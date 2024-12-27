@@ -12,7 +12,9 @@ A user-friendly GUI for designing and simulating quantum networks using PyQt5.
 
 ## Installation
 
-1. **Clone the Repository:**
+To get started, clone the repository and install the required dependencies:
 
-   ```bash
-   git clone https://github.com/yourusername/Quantum_Network_Simulator_GUI.git
+```bash
+git clone https://github.com/LucasRhode-png/QuantumNetSim.git
+cd QuantumNetSim
+pip install -r requirements.txt
