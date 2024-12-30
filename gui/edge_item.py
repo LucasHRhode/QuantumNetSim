@@ -1,6 +1,7 @@
 # gui/edge_item.py
 
 from PyQt5.QtGui import QPen, QColor, QPainter
+from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QGraphicsLineItem
 from gui.node_item import NodeItem
 
