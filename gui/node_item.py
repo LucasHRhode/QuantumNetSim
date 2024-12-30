@@ -27,6 +27,7 @@ class NodeItem(QGraphicsEllipseItem):
         self.insertion_loss = 0.0
 
         self.radius = radius
+        self.edges = [] # List of edges connected to the node
         self.setPen(QPen(Qt.black, 2))
         self.setBrush(QBrush(QColor("yellow")))
 
@@ -50,3 +51,27 @@ class NodeItem(QGraphicsEllipseItem):
         }
         color = type_color_map.get(self.node_type, QColor("gray"))
         self.setBrush(QBrush(color))
+
+    def add_edge (self, edge):
+        """Add an edge to the node."""
+        self.edges.append(edge)
+
+    def remove_edge(self, edge):
+        """Remove an edge from the node."""
+        if edge in self.edges:
+            self.edges.remove(edge)
+
+    def get_edges(self):
+        """Return the list of edges connected to the node."""
+        return self.edges
+    
+    def get_node_type(self):
+        """Return the node type."""
+        return self.node_type
+
+    def itemChange(self, change, value):
+        """Update the edges connected to the node."""
+        if change == QGraphicsEllipseItem.ItemPositionChange:
+            for edge in self.edges:
+                edge.adjust()
+        return super().itemChange(change, value)
