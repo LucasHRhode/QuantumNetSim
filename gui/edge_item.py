@@ -1,6 +1,6 @@
 # gui/edge_item.py
 
-from PyQt5.QtGui import QPen, QColor
+from PyQt5.QtGui import QPen, QColor, QPainter
 from PyQt5.QtWidgets import QGraphicsLineItem
 from gui.node_item import NodeItem
 
@@ -12,6 +12,8 @@ class EdgeItem(QGraphicsLineItem):
         super().__init__()
         self.source_node = source
         self.target_node = target
+
+        self.setFlags(QGraphicsLineItem.ItemIsSelectable)
         
         #Register the edge with both nodes
         self.source_node.add_edge(self)
@@ -34,3 +36,11 @@ class EdgeItem(QGraphicsLineItem):
         self.target_node.remove_edge(self)
         if self.scene() is not None:
             self.scene().removeItem(self)
+
+    def paint(self, painter, option, widget=None):
+        """Customize edge appearance when selected."""
+        if self.isSelected():
+            painter.setPen(QPen(QColor("red"), 2, Qt.DashLine))  # Highlight with dashed red line
+        else:
+            painter.setPen(QPen(QColor("black"), 2))  # Default black line
+        super().paint(painter, option, widget)

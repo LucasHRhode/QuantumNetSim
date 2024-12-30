@@ -103,10 +103,14 @@ class QuantumNetworkScene(QGraphicsScene):
             for item in self.selectedItems():
                 # Remove edges connected to a node
                 if isinstance(item, NodeItem):
-                    for edge in item.get_edges()[:]:  # Copy the list to avoid modification during iteration
-                        self.removeItem(edge)
-                        edge.source_node.remove_edge(edge)
-                        edge.target_node.remove_edge(edge)
+                    item.remove_all_edges(self)
+
+                # Remove the edge itself
+                elif isinstance(item, EdgeItem):
+                    item.source_node.remove_edge(item)
+                    item.target_node.remove_edge(item)
+                    self.removeItem(item)
+
                 # Remove the item itself (node or edge)
                 self.removeItem(item)
         else:
