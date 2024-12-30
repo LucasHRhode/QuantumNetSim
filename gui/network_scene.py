@@ -96,3 +96,19 @@ class QuantumNetworkScene(QGraphicsScene):
         window = self.views()[0].parent()
         if hasattr(window, 'status_bar'):
             window.status_bar.showMessage(message, timeout)
+
+    def keyPressEvent(self, event):
+        """Handle key press events for deleting selected items."""
+        if event.key() == Qt.Key_Delete:
+            for item in self.selectedItems():
+                # Remove edges connected to a node
+                if isinstance(item, NodeItem):
+                    for edge in item.get_edges()[:]:  # Copy the list to avoid modification during iteration
+                        self.removeItem(edge)
+                        edge.source_node.remove_edge(edge)
+                        edge.target_node.remove_edge(edge)
+                # Remove the item itself (node or edge)
+                self.removeItem(item)
+        else:
+            super().keyPressEvent(event)
+

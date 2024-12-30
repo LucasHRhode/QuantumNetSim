@@ -67,6 +67,13 @@ class NodeItem(QGraphicsEllipseItem):
         if hasattr(self, "edges"):
             self.edges.remove(edge)
 
+    def remove_all_edges(self, scene):
+        """Remove all edges connected to the node."""
+        for edge in self.get_edges()[:]: # Copy the list to avoid modification during iteration
+            scene.removeItem(edge) # Remove the edge from the scene
+            edge.source_node.remove_edge(edge) 
+            edge.target_node.remove_edge(edge)
+
     def get_edges(self):
         """Return the list of edges connected to the node."""
         return self.edges
