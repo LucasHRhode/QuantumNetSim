@@ -17,7 +17,11 @@ class NodeItem(QGraphicsEllipseItem):
     def __init__(self, x, y, radius=30):
         super().__init__(-radius/2, -radius/2, radius, radius)
         self.setPos(x, y)
-        self.setFlags(QGraphicsEllipseItem.ItemIsSelectable | QGraphicsEllipseItem.ItemIsMovable)
+        self.setFlags(
+    QGraphicsEllipseItem.ItemIsSelectable |
+    QGraphicsEllipseItem.ItemIsMovable |
+    QGraphicsEllipseItem.ItemSendsGeometryChanges  # Enable itemChange for position changes
+)
 
         # Default properties
         self.node_type = "memory"
@@ -54,11 +58,13 @@ class NodeItem(QGraphicsEllipseItem):
 
     def add_edge (self, edge):
         """Add an edge to the node."""
+        if not hasattr(self, "edges"):
+            self.edges = []
         self.edges.append(edge)
 
     def remove_edge(self, edge):
         """Remove an edge from the node."""
-        if edge in self.edges:
+        if hasattr(self, "edges"):
             self.edges.remove(edge)
 
     def get_edges(self):
@@ -73,5 +79,5 @@ class NodeItem(QGraphicsEllipseItem):
         """Update the edges connected to the node."""
         if change == QGraphicsEllipseItem.ItemPositionChange:
             for edge in self.edges:
-                edge.adjust()
+                edge.update_positions()
         return super().itemChange(change, value)
