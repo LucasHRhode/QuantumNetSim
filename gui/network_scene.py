@@ -115,4 +115,3 @@ class QuantumNetworkScene(QGraphicsScene):
                 self.removeItem(item)
         else:
             super().keyPressEvent(event)
-
