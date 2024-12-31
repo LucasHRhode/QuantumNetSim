@@ -1,5 +1,3 @@
-# gui/main_window.py
-
 from PyQt5.QtGui import QPalette, QColor
 from PyQt5.QtWidgets import (
     QMainWindow, QMenuBar, QToolBar, QStatusBar, QAction,

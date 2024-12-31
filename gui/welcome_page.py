@@ -20,8 +20,13 @@ class LineWidget(QWidget):
     def __init__(self, thickness=4, parent=None):
         super().__init__(parent)
         self.thickness = thickness
-        # The entire widget is white:
-        self.setStyleSheet("background-color: white;")
+        
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setPen(Qt.NoPen)
+        painter.setBrush(Qt.white)
+        rect = self.rect()
+        painter.drawRect(rect)
 
 class AnimatedBackgroundWidget(QDialog):
     """
@@ -42,7 +47,7 @@ class AnimatedBackgroundWidget(QDialog):
         self.gradient_counter = 0
 
         # Starfield/particle data
-        self.num_particles = 5000  # Increase or decrease as desired
+        self.num_particles = 5000  # Increase or decrease for more/less stars
         self.particles = []
 
         # references to the UI elements to animate them
@@ -54,8 +59,6 @@ class AnimatedBackgroundWidget(QDialog):
 
         # the UI (labels, buttons), lines, and fade animations
         self.setup_ui()
-        self.setup_lines()
-        self.setup_line_animations()
         self.setup_fade_in_animations()
 
         # Initialize the starfield
@@ -65,6 +68,11 @@ class AnimatedBackgroundWidget(QDialog):
         self.animation_timer = QTimer(self)
         self.animation_timer.timeout.connect(self.update_animation)
         self.animation_timer.start(30)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        self.setup_lines()  # Initialize lines after widget is shown
+
 
     # -------------------------------------------------------------------------
     # UI Setup
@@ -140,122 +148,61 @@ class AnimatedBackgroundWidget(QDialog):
         self.lines_bottom_left = []
         self.lines_bottom_right = []
 
-        line_thickness = 4
-        gap = 10  # ~1 cm in pixels
+        line_thickness = 10
+        spacing = 80
+        edge_offset = 50
+
         w = self.width()
         h = self.height()
 
-        # --- Top-left corner lines ---
-        for i in range(2):
-            line = LineWidget(thickness=line_thickness, parent=self)
-            line.setGeometry(
-                i * gap,  # offset horizontally by 'gap' for the second line
-                0,
-                line_thickness,
-                10  # minimal height
-            )
-            line.show()
-            line.raise_()  # Ensure lines are on top
-            self.lines_top_left.append(line)
+        for i in range(2):  # Two lines per corner
+            # Top-left corner: vertical, moving downward
+            self.lines_top_left.append({
+                'x': edge_offset + i * spacing,
+                'y': edge_offset,
+                'length': 0,  # Start with zero length
+                'orientation': 'vertical',
+                'opacity': 1.0,
+            })
 
-        # --- Bottom-left corner lines ---
-        for i in range(2):
-            line = LineWidget(thickness=line_thickness, parent=self)
-            line.setGeometry(
-                0,
-                h - line_thickness - i * gap,
-                10,
-                line_thickness
-            )
-            line.show()
-            line.raise_()  # Ensure lines are on top
-            self.lines_bottom_left.append(line)
+            # Bottom-left corner: horizontal, moving right
+            self.lines_bottom_left.append({
+                'x': edge_offset,
+                'y': h - edge_offset - (i + 1) * spacing,
+                'length': 0,  
+                'orientation': 'horizontal',
+                'opacity': 1.0,
+            })
 
-        # --- Bottom-right corner lines ---
-        for i in range(2):
-            line = LineWidget(thickness=line_thickness, parent=self)
-            line.setGeometry(
-                w - line_thickness - i * gap,
-                h - line_thickness,
-                line_thickness,
-                10
-            )
-            line.show()
-            line.raise_()  # Ensure lines are on top
-            self.lines_bottom_right.append(line)
+            # Bottom-right corner: vertical, moving upward
+            self.lines_bottom_right.append({
+                'x': w - edge_offset - (i + 1) * spacing,
+                'y': h - edge_offset,
+                'length': 0,  
+                'orientation': 'vertical',
+                'opacity': 1.0,
+            })
 
-            
+        self.update()  # Trigger repaint
 
-        
-
-    def setup_line_animations(self):
+    def update_lines(self):
         """
-        Animate each line from corners to near the 'middle' of the screen.
-        We'll store the animations in a list and start them in parallel.
+        Extend the lines 
         """
-        cx = self.width() // 2
-        cy = self.height() // 2
-        duration = 700
-        curve = QEasingCurve.InOutQuad
+        def update_line(line):
+            if line['orientation'] == 'vertical':
+                line['length'] += 15  # Extend downward/upward
+            elif line['orientation'] == 'horizontal':
+                line['length'] += 15  # Extend rightward
 
-        self.all_line_animations = []
+        for line in self.lines_top_left + self.lines_bottom_left + self.lines_bottom_right:
+            update_line(line)
 
-        # --- Animate top-left lines downward ---
-        for i, line in enumerate(self.lines_top_left):
-            anim = QPropertyAnimation(line, b"geometry", self)
-            anim.setDuration(duration)
-            anim.setEasingCurve(curve)
-            start_rect = line.geometry()
-            anim.setStartValue(start_rect)
-            # end_rect example: half the distance down from top to center
-            end_rect = QRect(
-                cx - (line.width() // 2) + i*10,
-                cy // 4,
-                line.width(),
-                cy - (cy // 4)
-            )
-            anim.setEndValue(end_rect)
-            self.all_line_animations.append(anim)
+        self.update()  # Trigger repaint
 
-        # --- Animate bottom-left lines right ---
-        for i, line in enumerate(self.lines_bottom_left):
-            anim = QPropertyAnimation(line, b"geometry", self)
-            anim.setDuration(duration)
-            anim.setEasingCurve(curve)
-            start_rect = line.geometry()
-            anim.setStartValue(start_rect)
-            # move horizontally halfway to center
-            end_width = cx // 2
-            end_rect = QRect(
-                0,
-                line.y() - i*10,
-                end_width,
-                line.height()
-            )
-            anim.setEndValue(end_rect)
-            self.all_line_animations.append(anim)
 
-        # --- Animate bottom-right lines upward ---
-        for i, line in enumerate(self.lines_bottom_right):
-            anim = QPropertyAnimation(line, b"geometry", self)
-            anim.setDuration(duration)
-            anim.setEasingCurve(curve)
-            start_rect = line.geometry()
-            anim.setStartValue(start_rect)
-            # move upward
-            end_height = (self.height() - cy)//2
-            end_rect = QRect(
-                line.x(),
-                cy + i*10,
-                line.width(),
-                end_height
-            )
-            anim.setEndValue(end_rect)
-            self.all_line_animations.append(anim)
 
-        # Start them all in parallel
-        for anim in self.all_line_animations:
-            anim.start()
+
 
     def button_style(self):
         """Return a stylish stylesheet for the buttons."""
@@ -391,10 +338,12 @@ class AnimatedBackgroundWidget(QDialog):
         Called ~30 times/sec:
          - Shift the rainbow gradient
          - Update starfield
+         - Update lines
          - Repaint
         """
         self.gradient_counter += 1
         self.update_particles()
+        self.update_lines()
         self.update()
 
     # -------------------------------------------------------------------------
@@ -431,6 +380,24 @@ class AnimatedBackgroundWidget(QDialog):
             painter.setPen(Qt.NoPen)
             painter.drawEllipse(int(p['x']), int(p['y']),
                                 int(p['size']), int(p['size']))
+            
+        # 3) Draw whooshing lines
+        def draw_lines(lines):
+            for line in lines:
+                color = QColor(255, 255, 255, int(line['opacity'] * 255))
+                pen = painter.pen()
+                pen.setColor(color)
+                pen.setWidth(10)  # Adjust thickness
+                painter.setPen(pen)
+                if line['orientation'] == 'vertical':
+                    painter.drawLine(line['x'], line['y'], line['x'], line['y'] + line['length'])
+                elif line['orientation'] == 'horizontal':
+                    painter.drawLine(line['x'], line['y'], line['x'] + line['length'], line['y'])
+        
+        draw_lines(self.lines_top_left)
+        draw_lines(self.lines_bottom_left)
+        draw_lines(self.lines_bottom_right)
+
 
         # Let the normal UI draw last (e.g. labels, buttons)
         super().paintEvent(event)
